@@ -48,6 +48,15 @@ if "AutoBrowserService" not in s:
 
         <provider''', 1)
     assert 'android:name=".AutoBrowserService"' in s
+# Share sheet: Decibel appears when sharing a link (e.g. from YouTube); MainActivity opens it in the search.
+if "android.intent.action.SEND" not in s:
+    s = s.replace('''        </activity>''', '''            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>''', 1)
+    assert "android.intent.action.SEND" in s
 Path(p + ".tmp").write_text(s)
 os.replace(p + ".tmp", p)
 resource = Path(p).parent / "res" / "xml" / "automotive_app_desc.xml"

@@ -1,6 +1,7 @@
 package app.decibel.music
 
 import android.Manifest
+import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -61,6 +62,20 @@ class MainActivity : TauriActivity() {
       WindowInsetsCompat.CONSUMED
     }
     hideNavigationBar()
+    if (savedInstanceState == null) takeShared(intent)
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    takeShared(intent)
+  }
+
+  /** Share sheet (ACTION_SEND): keep the first URL of the text (YouTube adds a title) for the page to open. */
+  private fun takeShared(intent: Intent?) {
+    if (intent?.action != Intent.ACTION_SEND) return
+    val text = intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty()
+    DecibelMedia.sharedText = Regex("https?://\\S+").find(text)?.value ?: text.trim()
+    webView?.evaluateJavascript("window.__decibelNative?.('share', null)", null)
   }
 
   override fun onWebViewCreate(webView: WebView) {

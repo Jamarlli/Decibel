@@ -76,6 +76,7 @@ object DecibelMedia {
   @Volatile private var updateState = "idle"
   @Volatile private var pendingApk: File? = null
   @Volatile var autoReady = false; private set
+  @Volatile var sharedText = "" // set by MainActivity from an ACTION_SEND intent, read once by JS
   private var autoSequence = 0
   private var autoPlaybackGeneration = 0
   private val autoRequests = ConcurrentHashMap<Int, (JSONObject?) -> Unit>()
@@ -139,7 +140,8 @@ object DecibelMedia {
       }.start()
     }
     @JavascriptInterface fun stop() { main.post { release() } }
-    @JavascriptInterface fun version(): Int = 7
+    @JavascriptInterface fun version(): Int = 8
+    @JavascriptInterface fun sharedText(): String = sharedText.also { sharedText = "" }
     @JavascriptInterface fun autoReady(ready: Boolean) { main.post { setAutoReady(ready) } }
     @JavascriptInterface fun autoRequestActive(id: Int): Boolean = autoReady && autoRequests.containsKey(id)
     @JavascriptInterface fun autoResult(id: Int, json: String) {

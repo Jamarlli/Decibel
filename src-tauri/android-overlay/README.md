@@ -30,6 +30,7 @@ The icons (adaptive launcher with transparent background and monochrome layer, l
   priority stays IMPORTANT in the background. Asks for POST_NOTIFICATIONS (Android 13+) on first launch;
   if Android could not show the dialog it retries on the first play. When denied, playback and the
   foreground service keep working; Settings → Playback offers «Activar» to grant it later.
+  Links shared to Decibel (share sheet, `ACTION_SEND` text) open in the search (bridge 8, `sharedText()`).
 - `DecibelMedia.kt`: JS bridge (`window.DecibelNative` / `window.__decibelNative`), MediaSession,
   ACTION_AUDIO_BECOMING_NOISY, partial WakeLock + WifiLock while playing. **Audio focus is handled only by the
   WebView** (Chromium requests AUDIOFOCUS_GAIN for `<audio>`); requesting it natively as well makes both

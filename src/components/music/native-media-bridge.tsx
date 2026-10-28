@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { create } from "zustand"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ import { usePlayer } from "@/stores/player"
 import { interruption } from "./interruption-controller"
 import { useProfile } from "@/stores/profile"
 import { useSession } from "@/stores/session"
+import { searchHref } from "@/stores/search"
 import { browseAuto, resolveAutoPlay, searchAuto } from "@/lib/android-auto"
 
 /** Exposed by the Android shell (DecibelMedia.kt) through addJavascriptInterface. */
@@ -41,6 +43,8 @@ interface DecibelNative {
   autoResult?(request: number, json: string): void
   autoRequestActive?(request: number): boolean
   autoRefresh?(): void
+  /** Bridge 8: text shared to Decibel from another app (read once, then cleared). */
+  sharedText?(): string
 }
 
 /** Notification permission as last reported by the shell (null: not Android / unknown). */
@@ -118,6 +122,7 @@ export function NativeMediaBridge() {
   const mode = useSession((s) => s.mode)
   const cover = useAuthenticatedArtwork(provider.coverUrl(track?.coverArt, 512))
   const ducked = useRef<number | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const bridge = native()
@@ -170,9 +175,13 @@ export function NativeMediaBridge() {
   // native → JS
   useEffect(() => {
     if (!native()) return
+    // A link shared from YouTube (or any text) opens in the search, which already resolves YouTube URLs.
+    const openShared = () => { const text = native()?.sharedText?.(); if (text) router.push(searchHref(text)) }
+    openShared()
     window.__decibelNative = (command, arg) => {
       const p = usePlayer.getState()
       switch (command) {
+        case "share": openShared(); break
         case "play": if (p.queue.length) p.setPlaying(true); break
         case "pause": p.setPlaying(false); break
         case "next": void p.next(); break
@@ -200,7 +209,7 @@ export function NativeMediaBridge() {
       }
     }
     return () => { delete window.__decibelNative }
-  }, [])
+  }, [router])
 
   // JS → native: state, sent on changes and on seeks (native extrapolates the position while playing)
   useEffect(() => {
